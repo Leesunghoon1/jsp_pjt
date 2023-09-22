@@ -15,6 +15,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import domain.BoardVO;
+import domain.PagingVO;
+import handler.PagingHandler;
 import service.BoardService;
 import service.BoardServiceImpl;
 
@@ -96,18 +98,55 @@ public class BoardController extends HttpServlet {
 					}
 					break;
 					
-				case "list" :
+//				case "list" :
+//					try {
+//						log.info("리스트 첫번째 1");
+//						List<BoardVO>list = bsv.getList();
+//						//bsv객체를 list로 계속 넣겠다
+//						log.info(list.get(0).toString());
+//						// 가져온 List에 첫 값을 출력
+//						request.setAttribute("list", list);
+//						//ㅣlist를 화면으로 보내기 request 객체에 실어 보내기
+//						destPage = "/board/list.jsp";
+//					} catch (Exception e) {
+//						log.info("데이터베이스 문제.");
+//						e.printStackTrace();
+//					}
+//					break;
+					
+				case "pageList" :
 					try {
-						log.info("리스트 첫번째 1");
-						List<BoardVO>list = bsv.getList();
-						//bsv객체를 list로 계속 넣겠다
-						log.info(list.get(0).toString());
-						// 가져온 List에 첫 값을 출력
+						//jsp에 파라미터 받기
+						PagingVO pgvo = new PagingVO(); //1, 5
+						if(request.getParameter("pageNo") != null) {
+							//만약에 가져온 페이지네이션 번호가 널이 아니면
+							int pageNo = Integer.parseInt(request.getParameter("pageNo"));
+							//페이지네이션 값을 pageNo 객체에 넣겠다
+							int qty = Integer.parseInt(request.getParameter("qty"));
+							//게시글수 값을 qty에 넣겠다.
+							log.info("pagingno"+pageNo+"qty"+qty);
+						//검색어 받기
+						String type = request.getParameter("type");
+						String keyword = request.getParameter("ketword");
+						// 타입, 키워드 가져오기
+						pgvo.setType(type);
+						pgvo.setKeyword(keyword);
+						//jsp에서 가져오면 저장해서 mapper로 가져가서 검색해서 가져오게끔 만들어주는 set 
+						log.info("type : " + pgvo.getType() + "keyword : " + pgvo.getKeyword());
+						//pagingVO, totalCount
+						int totalCount = bsv.getTotalCount(pgvo);   
+						//DB에서 전체 카운트 요청
+						log.info("전체 게시글 수 " + totalCount);
+						// bsv pgvo 주고, limit 적용한 리스트 10개 가져오기
+						List<BoardVO> list = bsv.getPageList(pgvo);
 						request.setAttribute("list", list);
-						//ㅣlist를 화면으로 보내기 request 객체에 실어 보내기
+						//페이지 정보를 list.jsp로 보내기
+						PagingHandler ph = new PagingHandler(pgvo, totalCount);
+						request.setAttribute("ph", ph);
+						log.info("paging 성공~");
 						destPage = "/board/list.jsp";
+						}
 					} catch (Exception e) {
-						log.info("데이터베이스 문제.");
 						e.printStackTrace();
 					}
 					break;

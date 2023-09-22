@@ -8,6 +8,27 @@
   values(#{id}, #{pwd}, #{email}, #{pnum}, #{age})
   </insert>
   
+  <select id="login" parameterType="mvo" resultType="mvo">
+  select * from member where id = #{id} and pwd = #{pwd}
+  </select>
+  
+  <update id="logout" parameterType="String">
+    update member set lastlogin = now() where id = #{id}
+  </update>
+  
+  <select id="list" resultType="mvo">
+  	select * from member
+  </select>
+  
+  <update id="update" parameterType="mvo">
+  <!-- parameterType="mvo" 이걸 받아야 mvo 객체를 쓸수있음 -->
+  <!-- resultType="mvo" 이걸 보내야 서버에서 쓸수있음   -->
+  update member set pwd=#{pwd}, email=#{email}, pnum=#{pnum} where id=#{id}
+  </update>
+  
+  <delete id="del" parameterType="String">
+  delete from member where id = #{id} 
+  </delete>
   
   
   

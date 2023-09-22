@@ -3,6 +3,7 @@ package dao;
 import java.util.List;
 
 import domain.BoardVO;
+import domain.PagingVO;
 
 public interface BoardDAO {
 
@@ -17,5 +18,9 @@ public interface BoardDAO {
 	int update(BoardVO bvo);
 
 	int remove(int bno);
+
+	int getTotalCount(PagingVO pgvo);
+
+	List<BoardVO> getPageList(PagingVO pgvo);
 
 }

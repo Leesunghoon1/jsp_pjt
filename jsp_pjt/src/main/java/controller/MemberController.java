@@ -1,6 +1,7 @@
 package controller;
 
 import java.io.IOException;
+import java.util.List;
 
 import javax.servlet.RequestDispatcher;
 import javax.servlet.ServletException;
@@ -8,6 +9,7 @@ import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -73,7 +75,11 @@ public class MemberController extends HttpServlet {
 			
 			MemberVO mvo = new MemberVO(id, pwd, email, pnum, age);
 			log.info("생성자 잘 만들어졌나?" + mvo);
+			
+			
 			isOK = msv.register(mvo);
+			
+			
 			log.info("register 체크4" + ((isOK > 0)? "ok" : "fail"));
 			destPage = "/index.jsp";
 			
@@ -83,7 +89,128 @@ public class MemberController extends HttpServlet {
 			}
 			
 			break;
+			
+		case "login" : //로그인이 일어나는 케이스
+			try {
+				//파라미터가 DB의 값에 있는지 확인
+				//해당 id, pw가 일치하는 데이터를 가져오기
+				//가져온 데이터를 세션에 저장
+				//session : 모든 jsp페이지에 공유되는 데이터
+				//만약에 아이디가 없다면, 메세지를 보내서 alert 창 띄우기
+				String id = request.getParameter("id");
+				String pwd = request.getParameter("pwd");
+				MemberVO mvo = new MemberVO(id, pwd);
+				//가져온 데이터를 세션에 저장
+				//세션 가져오기
+				MemberVO loginmvo = msv.login(mvo);
+				log.info("로그인 들어갔나 1" + loginmvo);
+				
+				if(loginmvo != null) {
+					//연결된 세션이 있다면 기존의 세션 가져오기, 없으면 새로 생성
+					HttpSession ses = request.getSession();
+					// ses 세션 만들어서 setAttribute 
+					ses.setAttribute("ses", loginmvo);
+					//setAttribute 값 전달
+					ses.setMaxInactiveInterval(300);  //초단위 (로그인 유지되는 시간)
+					destPage = "/index.jsp";
+				}
+				else {
+					//로그인 객체가 없다면
+					request.setAttribute("msg_login", 0);
+				}
+				
+			} catch (Exception e) {
+			log.info("조인 에러");
+			e.printStackTrace();
+			}
+			break;
+			
+		case "logout" :
+			try {
+				//연결된 세션이 있다면 해당 세션을 가져오기
+				HttpSession ses = request.getSession();
+				//로그인한 세션
+				MemberVO mvo = (MemberVO)ses.getAttribute("ses");
+				String id = mvo.getId();
+				//session에서 id 가져오기
+				log.info("ses id >>>>" + id);
+				isOK = msv.lastLogin(id);
+				ses.invalidate();
+				// ses.invalidate(); = ses를 강제로 끊어버리는 느낌
+				log.info("logout >>" +(isOK > 0 ? "ok" : "fail"));
+				destPage = "/index.jsp";
+			} catch (Exception e) {
+				log.info("로그아웃 메퍼문제");
+				e.printStackTrace();
+			}
+			break;
+			
+		case "list" :
+			
+			try {
+				List<MemberVO> list = msv.getList();
+
+				request.setAttribute("list", list);
+				// 리스트를 전달하겠다.
+				destPage = "/member/list.jsp";
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+			
+		break;
+		case "modify" :
+			
+		destPage="/member/modify.jsp";
+			
+			break;
+		case "update" :
+			
+			try {
+				String id = request.getParameter("id");
+				String pwd = request.getParameter("pwd");
+				String email = request.getParameter("email");
+				int pnum = Integer.parseInt(request.getParameter("pnum"));
+				int age = Integer.parseInt(request.getParameter("age"));
+				MemberVO mvo = new MemberVO(id, pwd, email, pnum, age);
+				HttpSession ses = request.getSession();
+				//msv 에게 수정 요청 -> mdao 수정 요청 -> mapper 수정요청
+				isOK = msv.update(mvo);
+				log.info("오류1");
+				log.info("update>>" + (isOK > 0 ? "OK" : "fail" ));
+				ses.invalidate();
+				destPage = "/index.jsp";
+			} catch (Exception e) {
+				log.info("메퍼오류");
+				e.printStackTrace();
+			}
+			break;
+			
+		case "remove" :
+			try {
+				//연결된 세션이 있다면 해당 세션을 가져오기
+				HttpSession ses = request.getSession();
+				//로그인한 세션
+				MemberVO mvo = (MemberVO)ses.getAttribute("ses");
+				String id = mvo.getId();
+				log.info("ses remove >>>>>" + id);
+				//msv에 id 주고 객체 삭제요청 -> mdao id 주고 삭제요청
+				isOK = msv.remove(id);
+				ses.invalidate();
+				log.info("remove >>" +(isOK > 0 ? "ok" : "fail"));
+				//mapper 삭제
+				
+				//세션 끊고, index로 이동
+				destPage="/index.jsp";
+			} catch (Exception e) {
+				log.info("메퍼오류");
+				e.printStackTrace();
+			}
+			
+			break;
+			
 		}
+		
+			
 		
 		
 		
